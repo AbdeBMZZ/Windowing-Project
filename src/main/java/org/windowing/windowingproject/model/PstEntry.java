@@ -12,6 +12,9 @@ public final class PstEntry {
     private final int segmentIndex;
     private final int endpointIndex;
 
+    private final CompositeNumber cx; // (x | y)
+    private final CompositeNumber cy; // (y | x)
+
     /**
      * @param x            x-coordinate in the plane
      * @param y            y-coordinate in the plane
@@ -23,6 +26,8 @@ public final class PstEntry {
         this.y = y;
         this.segmentIndex = segmentIndex;
         this.endpointIndex = endpointIndex;
+        this.cx = new CompositeNumber(x, y);
+        this.cy = new CompositeNumber(y, x);
     }
 
     public double getX() {
@@ -40,4 +45,6 @@ public final class PstEntry {
     public int getEndpointIndex() {
         return endpointIndex;
     }
+    public CompositeNumber getCx() { return cx; }
+    public CompositeNumber getCy() { return cy; }
 }
