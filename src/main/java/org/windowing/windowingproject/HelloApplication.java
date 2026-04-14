@@ -2,6 +2,7 @@ package org.windowing.windowingproject;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -28,7 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JavaFX UI: load segment files, build twin PSTs on endpoints, run windowing and draw results.
+ * JavaFX UI: load segment files, build twin PSTs on endpoints, run windowing
+ * and draw results.
  */
 public class HelloApplication extends Application {
 
@@ -39,42 +41,67 @@ public class HelloApplication extends Application {
 
     @Override
     public void start(Stage stage) {
+        // CORRECTION: Utilisation de setPrefSize au lieu du constructeur (standard
+        // JavaFX)
         canvas = new DrawingPane(800, 600);
+        canvas.setPrefSize(800, 600);
+        canvas.setId("drawingPane"); // Lien avec le CSS (#drawingPane)
 
         Button loadBtn = new Button("Load");
         Button queryBtn = new Button("Windowing");
 
+        // Lien avec le CSS (.button)
+        loadBtn.getStyleClass().add("button");
+        queryBtn.getStyleClass().add("button");
+
         TextField xminField = new TextField();
         xminField.setPromptText("xMin");
+        xminField.setPrefWidth(70);
 
         TextField xmaxField = new TextField();
         xmaxField.setPromptText("xMax");
+        xmaxField.setPrefWidth(70);
 
         TextField yminField = new TextField();
         yminField.setPromptText("yMin");
+        yminField.setPrefWidth(70);
 
         TextField ymaxField = new TextField();
         ymaxField.setPromptText("yMax");
+        ymaxField.setPrefWidth(70);
 
         loadBtn.setOnAction(e -> loadFile(stage));
-
         queryBtn.setOnAction(e -> runWindowing(xminField, xmaxField, yminField, ymaxField));
 
-        HBox controls = new HBox(10, loadBtn, queryBtn,
+        HBox controls = new HBox(15, loadBtn, queryBtn,
                 xminField, xmaxField, yminField, ymaxField);
-        controls.setPadding(new Insets(10));
+        controls.setPadding(new Insets(15));
+        controls.setAlignment(Pos.CENTER_LEFT);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
         root.setCenter(canvas);
 
+        // Ajout d'une marge autour du canvas pour faire plus propre
+        BorderPane.setMargin(canvas, new Insets(15));
+
+        Scene scene = new Scene(root, 950, 700);
+
+        // CORRECTION: Chargement sécurisé du CSS
+        java.net.URL cssUrl = getClass().getResource("styles.css");
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl.toExternalForm());
+        } else {
+            System.out.println("Attention: Fichier styles.css introuvable dans les ressources.");
+        }
+
         stage.setTitle("Windowing with Priority Search Tree");
-        stage.setScene(new Scene(root, 900, 650));
+        stage.setScene(scene);
         stage.show();
     }
 
     private void runWindowing(TextField xminField, TextField xmaxField,
-                              TextField yminField, TextField ymaxField) {
+            TextField yminField, TextField ymaxField) {
         try {
             if (pstIndex == null) {
                 alert("Load a segment file first.");
@@ -93,7 +120,7 @@ public class HelloApplication extends Application {
                 strategy = new LeftBoundedWindowStrategy();
             } else if (xmax == Double.POSITIVE_INFINITY) {
                 strategy = new RightBoundedWindowStrategy();
-            } else {
+            } else {     
                 strategy = new BoundedWindowStrategy();
             }
 

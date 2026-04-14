@@ -1,0 +1,48 @@
+/* styles.css */
+.root {
+    background-color: #1e1e2e; /* CSS Standard : pour faire taire l'avertissement de l'IDE */
+    -fx-background-color: #1e1e2e; /* JavaFX : la vraie propriété utilisée par votre app */
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+.button {
+    background-color: #89b4fa;
+    -fx-background-color: #89b4fa;
+    color: #11111b; /* Le standard de -fx-text-fill */
+    -fx-text-fill: #11111b;
+    font-weight: bold;
+    -fx-font-weight: bold;
+    border-radius: 8px; /* Le standard de -fx-background-radius */
+    -fx-background-radius: 8px;
+    padding: 10px 20px;
+    -fx-padding: 10px 20px;
+    cursor: pointer; /* 'pointer' en Web, 'hand' en JavaFX */
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    background-color: #b4befe;
+    -fx-background-color: #b4befe;
+    /* L'effet dropshadow est spécifique à JavaFX, l'équivalent web serait box-shadow */
+    box-shadow: 0px 0px 10px rgba(137, 180, 250, 0.4);
+    -fx-effect: dropshadow(three-pass-box, rgba(137, 180, 250, 0.4), 10, 0, 0, 0);
+}
+
+.label {
+    color: #cdd6f4;
+    -fx-text-fill: #cdd6f4;
+    font-size: 14px;
+    -fx-font-size: 14px;
+}
+
+#drawingPane {
+    background-color: #313244;
+    -fx-background-color: #313244;
+    border-color: #45475a;
+    -fx-border-color: #45475a;
+    border-width: 2px;
+    -fx-border-width: 2px;
+    border-radius: 5px;
+    -fx-border-radius: 5px;
+}
