@@ -3,14 +3,23 @@ package org.windowing.windowingproject;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.windowing.windowingproject.model.*;
+import org.windowing.windowingproject.model.PstEntry;
+import org.windowing.windowingproject.model.Segment;
+import org.windowing.windowingproject.model.Window;
+import org.windowing.windowingproject.pst.PstIndex;
 import org.windowing.windowingproject.pst.PrioritySearchTree;
-import org.windowing.windowingproject.strategy.*;
+import org.windowing.windowingproject.strategy.BoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.LeftBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.RightBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.WindowingContext;
+import org.windowing.windowingproject.strategy.WindowingStrategy;
 import org.windowing.windowingproject.ui.DrawingPane;
 import org.windowing.windowingproject.util.FileLoader;
 
@@ -18,11 +27,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * JavaFX UI: load segment files, build twin PSTs on endpoints, run windowing and draw results.
+ */
 public class HelloApplication extends Application {
 
     private final List<Segment> segments = new ArrayList<>();
-    private PrioritySearchTree pst;
-    private Window window;
+    private PstIndex pstIndex;
+    private Window fileWindow;
     private DrawingPane canvas;
 
     @Override
@@ -46,38 +58,7 @@ public class HelloApplication extends Application {
 
         loadBtn.setOnAction(e -> loadFile(stage));
 
-        queryBtn.setOnAction(e -> {
-            try {
-                double xmin = parseValue(xminField.getText(), Double.NEGATIVE_INFINITY);
-                double xmax = parseValue(xmaxField.getText(), Double.POSITIVE_INFINITY);
-                double ymin = parseValue(yminField.getText(), Double.NEGATIVE_INFINITY);
-                double ymax = parseValue(ymaxField.getText(), Double.POSITIVE_INFINITY);
-
-                Window queryWindow = new Window(xmin, xmax, ymin, ymax);
-
-                WindowingStrategy strategy;
-                if (xmin == Double.NEGATIVE_INFINITY) {
-                    strategy = new LeftBoundedWindowStrategy();
-                } else if (xmax == Double.POSITIVE_INFINITY) {
-                    strategy = new RightBoundedWindowStrategy();
-                } else {
-                    strategy = new BoundedWindowStrategy();
-                }
-
-                WindowingContext context = new WindowingContext();
-                context.setStrategy(strategy);
-
-                List<Segment> result = context.executeStrategy(
-                        pst, segments, queryWindow);
-
-                canvas.drawSegments(segments);
-                canvas.drawWindow(queryWindow);
-                canvas.highlightSegments(result);
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+        queryBtn.setOnAction(e -> runWindowing(xminField, xmaxField, yminField, ymaxField));
 
         HBox controls = new HBox(10, loadBtn, queryBtn,
                 xminField, xmaxField, yminField, ymaxField);
@@ -92,6 +73,52 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
+    private void runWindowing(TextField xminField, TextField xmaxField,
+                              TextField yminField, TextField ymaxField) {
+        try {
+            if (pstIndex == null) {
+                alert("Load a segment file first.");
+                return;
+            }
+
+            double xmin = parseValue(xminField.getText(), Double.NEGATIVE_INFINITY);
+            double xmax = parseValue(xmaxField.getText(), Double.POSITIVE_INFINITY);
+            double ymin = parseValue(yminField.getText(), Double.NEGATIVE_INFINITY);
+            double ymax = parseValue(ymaxField.getText(), Double.POSITIVE_INFINITY);
+
+            Window queryWindow = new Window(xmin, xmax, ymin, ymax);
+
+            WindowingStrategy strategy;
+            if (xmin == Double.NEGATIVE_INFINITY) {
+                strategy = new LeftBoundedWindowStrategy();
+            } else if (xmax == Double.POSITIVE_INFINITY) {
+                strategy = new RightBoundedWindowStrategy();
+            } else {
+                strategy = new BoundedWindowStrategy();
+            }
+
+            WindowingContext context = new WindowingContext();
+            context.setStrategy(strategy);
+
+            List<Segment> result = context.executeStrategy(pstIndex, segments, queryWindow);
+
+            canvas.drawSegments(segments);
+            canvas.drawWindow(queryWindow);
+            canvas.highlightSegments(result);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            alert("Windowing failed: " + ex.getMessage());
+        }
+    }
+
+    private static void alert(String message) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setHeaderText(null);
+        a.setContentText(message);
+        a.showAndWait();
+    }
+
     private double parseValue(String text, double defaultValue) {
         if (text == null || text.isBlank()) {
             return defaultValue;
@@ -104,31 +131,33 @@ public class HelloApplication extends Application {
         chooser.setTitle("Open Segments File");
         File file = chooser.showOpenDialog(stage);
 
-        if (file == null) return;
+        if (file == null) {
+            return;
+        }
 
         try {
             FileLoader loader = new FileLoader();
             segments.clear();
             segments.addAll(loader.loadSegments(file.getAbsolutePath()));
-            window = loader.getWindow();
+            fileWindow = loader.getWindow();
 
-            List<Point2D> points = new ArrayList<>();
-            for (Segment s : segments) {
-                points.add(s.getP1());
-                points.add(s.getP2());
+            List<PstEntry> entries = new ArrayList<>();
+            for (int i = 0; i < segments.size(); i++) {
+                Segment s = segments.get(i);
+                entries.add(new PstEntry(s.getP1().getX(), s.getP1().getY(), i, 0));
+                entries.add(new PstEntry(s.getP2().getX(), s.getP2().getY(), i, 1));
             }
 
-            pst = new PrioritySearchTree(points);
+            PrioritySearchTree forward = new PrioritySearchTree(entries, false);
+            PrioritySearchTree negatedX = new PrioritySearchTree(entries, true);
+            pstIndex = new PstIndex(forward, negatedX);
 
             canvas.drawSegments(segments);
-            canvas.drawWindow(window);
+            canvas.drawWindow(fileWindow);
 
         } catch (Exception e) {
             e.printStackTrace();
+            alert("Failed to load file: " + e.getMessage());
         }
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 }

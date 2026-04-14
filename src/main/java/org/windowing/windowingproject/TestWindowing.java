@@ -3,9 +3,12 @@ package org.windowing.windowingproject;
 import javafx.application.Application;
 
 /**
- * Alternative launcher; the graded entry point is {@link TestWindowing}.
+ * Entry point required by the course specification (class name starts with {@code Test}).
  */
-public class Launcher {
+public final class TestWindowing {
+
+    private TestWindowing() {
+    }
 
     public static void main(String[] args) {
         Application.launch(HelloApplication.class, args);

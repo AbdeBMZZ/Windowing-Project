@@ -1,6 +1,10 @@
 package org.windowing.windowingproject.model;
 
+/**
+ * Immutable point in {@code R²}.
+ */
 public class Point2D {
+
     private final double x;
     private final double y;
 
@@ -9,6 +13,11 @@ public class Point2D {
         this.y = y;
     }
 
-    public double getX() { return x; }
-    public double getY() { return y; }
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
 }

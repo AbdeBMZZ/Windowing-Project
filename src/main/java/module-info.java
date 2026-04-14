@@ -1,13 +1,6 @@
 module org.windowing.windowingproject {
     requires javafx.controls;
     requires javafx.fxml;
-    requires javafx.web;
-    requires javafx.swing;
-
-    requires org.controlsfx.controls;
-    requires com.dlsc.formsfx;
-    requires org.kordamp.bootstrapfx.core;
-    requires eu.hansolo.tilesfx;
 
     opens org.windowing.windowingproject to javafx.fxml;
 

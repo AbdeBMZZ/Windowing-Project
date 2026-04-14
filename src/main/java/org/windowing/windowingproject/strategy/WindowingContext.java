@@ -2,10 +2,13 @@ package org.windowing.windowingproject.strategy;
 
 import org.windowing.windowingproject.model.Segment;
 import org.windowing.windowingproject.model.Window;
-import org.windowing.windowingproject.pst.PrioritySearchTree;
+import org.windowing.windowingproject.pst.PstIndex;
 
 import java.util.List;
 
+/**
+ * Selects a {@link WindowingStrategy} and runs it on a {@link PstIndex}.
+ */
 public class WindowingContext {
 
     private WindowingStrategy strategy;
@@ -14,14 +17,13 @@ public class WindowingContext {
         this.strategy = strategy;
     }
 
-    public List<Segment> executeStrategy(
-            PrioritySearchTree pst,
-            List<Segment> segments,
-            Window window) {
-
+    /**
+     * @throws IllegalStateException if no strategy was set
+     */
+    public List<Segment> executeStrategy(PstIndex pstIndex, List<Segment> segments, Window window) {
         if (strategy == null) {
             throw new IllegalStateException("Strategy not set.");
         }
-        return strategy.execute(pst, segments, window);
+        return strategy.execute(pstIndex, segments, window);
     }
 }
