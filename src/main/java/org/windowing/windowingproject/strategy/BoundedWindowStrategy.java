@@ -14,10 +14,7 @@ public class BoundedWindowStrategy implements WindowingStrategy {
 
     @Override
     public List<Segment> execute(PstIndex pstIndex, List<Segment> segments, Window window) {
-        return PstWindowing.findIntersectingSegments(
-                pstIndex.getForward(),
-                pstIndex.getNegatedX(),
-                segments,
-                window);
+        // On passe directement l'index complet (qui contient maintenant les PST et les IntervalTrees)
+        return PstWindowing.findIntersectingSegments(pstIndex, segments, window);
     }
 }

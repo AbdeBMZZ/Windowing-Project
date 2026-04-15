@@ -11,6 +11,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import org.windowing.windowingproject.model.IntervalTree;
 import org.windowing.windowingproject.model.PstEntry;
 import org.windowing.windowingproject.model.Segment;
 import org.windowing.windowingproject.model.Window;
@@ -48,8 +50,9 @@ public class HelloApplication extends Application {
         canvas.setId("drawingPane"); // Lien avec le CSS (#drawingPane)
 
         Button loadBtn = new Button("Load");
+        loadBtn.setId("button"); // Lien avec le CSS (#loadButton)
         Button queryBtn = new Button("Windowing");
-
+        
         // Lien avec le CSS (.button)
         loadBtn.getStyleClass().add("button");
         queryBtn.getStyleClass().add("button");
@@ -168,17 +171,40 @@ public class HelloApplication extends Application {
             segments.addAll(loader.loadSegments(file.getAbsolutePath()));
             fileWindow = loader.getWindow();
 
+            // 1. Liste pour les extrémités (destinée aux PST)
             List<PstEntry> entries = new ArrayList<>();
+            
+            // 2. NOUVEAU : Listes pour trier les segments (destinées aux Interval Trees)
+            List<Segment> horizSegments = new ArrayList<>();
+            List<Segment> vertSegments = new ArrayList<>();
+
             for (int i = 0; i < segments.size(); i++) {
                 Segment s = segments.get(i);
+                
+                // Extraction des extrémités pour la recherche rapide (PST)
                 entries.add(new PstEntry(s.getP1().getX(), s.getP1().getY(), i, 0));
                 entries.add(new PstEntry(s.getP2().getX(), s.getP2().getY(), i, 1));
+                
+                // NOUVEAU : Séparation des segments horizontaux et verticaux
+                if (s.getP1().getY() == s.getP2().getY()) {
+                    horizSegments.add(s);
+                } else {
+                    vertSegments.add(s);
+                }
             }
 
+            // 3. Création des Priority Search Trees (comme avant)
             PrioritySearchTree forward = new PrioritySearchTree(entries, false);
             PrioritySearchTree negatedX = new PrioritySearchTree(entries, true);
-            pstIndex = new PstIndex(forward, negatedX);
+            
+            // 4. NOUVEAU : Création des Interval Trees
+            IntervalTree hTree = new IntervalTree(horizSegments, true);
+            IntervalTree vTree = new IntervalTree(vertSegments, false);
 
+            // 5. NOUVEAU : L'index prend maintenant les 4 structures !
+            pstIndex = new PstIndex(forward, negatedX, hTree, vTree);
+
+            // Dessin initial
             canvas.drawSegments(segments);
             canvas.drawWindow(fileWindow);
 

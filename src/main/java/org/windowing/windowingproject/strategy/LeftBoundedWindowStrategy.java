@@ -19,10 +19,8 @@ public class LeftBoundedWindowStrategy implements WindowingStrategy {
                 window.getXMax(),
                 window.getYMin(),
                 window.getYMax());
-        return PstWindowing.findIntersectingSegments(
-                pstIndex.getForward(),
-                pstIndex.getNegatedX(),
-                segments,
-                adapted);
+                
+        // NOUVEL APPEL : On passe directement l'objet pstIndex complet
+        return PstWindowing.findIntersectingSegments(pstIndex, segments, adapted);
     }
 }
