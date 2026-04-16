@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DrawingPane extends Pane {
-    private Canvas canvas;
+    private final Canvas canvas;
     private double dragX1, dragY1, dragX2, dragY2;
     private boolean isDragging = false;
-    private Consumer<Window> onWindowSelected; // Callback pour HelloApplication
+    private Consumer<Window> onWindowSelected;
+
+    private Window worldBounds;
 
     public DrawingPane() {
         canvas = new Canvas();
@@ -22,7 +24,6 @@ public class DrawingPane extends Pane {
         canvas.widthProperty().bind(this.widthProperty());
         canvas.heightProperty().bind(this.heightProperty());
 
-        // --- GESTION DE LA SOURIS ---
         canvas.setOnMousePressed(e -> {
             dragX1 = e.getX();
             dragY1 = e.getY();
@@ -32,27 +33,31 @@ public class DrawingPane extends Pane {
         canvas.setOnMouseDragged(e -> {
             dragX2 = e.getX();
             dragY2 = e.getY();
-            repaint(); // Dessine le rectangle en temps réel
+            repaint();
         });
 
         canvas.setOnMouseReleased(e -> {
             isDragging = false;
             dragX2 = e.getX();
             dragY2 = e.getY();
-            
-            // Calcul de la fenêtre finale
-            double xMin = Math.min(dragX1, dragX2);
-            double xMax = Math.max(dragX1, dragX2);
-            double yMin = Math.min(dragY1, dragY2);
-            double yMax = Math.max(dragY1, dragY2);
-            
+
+            double wx1 = screenToWorldX(Math.min(dragX1, dragX2));
+            double wx2 = screenToWorldX(Math.max(dragX1, dragX2));
+            double wy1 = screenToWorldY(Math.min(dragY1, dragY2));
+            double wy2 = screenToWorldY(Math.max(dragY1, dragY2));
+
             if (onWindowSelected != null) {
-                onWindowSelected.accept(new Window(xMin, xMax, yMin, yMax));
+                onWindowSelected.accept(new Window(wx1, wx2, wy1, wy2));
             }
         });
 
         canvas.widthProperty().addListener(evt -> repaint());
         canvas.heightProperty().addListener(evt -> repaint());
+    }
+
+    public void setWorldBounds(Window bounds) {
+        this.worldBounds = bounds;
+        repaint();
     }
 
     public void setOnWindowSelected(Consumer<Window> callback) {
@@ -78,38 +83,69 @@ public class DrawingPane extends Pane {
         repaint();
     }
 
+    // ---- coordinate transforms ----
+
+    private double worldToScreenX(double wx) {
+        if (worldBounds == null) return wx;
+        double w = canvas.getWidth();
+        return (wx - worldBounds.getXMin()) / (worldBounds.getXMax() - worldBounds.getXMin()) * w;
+    }
+
+    private double worldToScreenY(double wy) {
+        if (worldBounds == null) return wy;
+        double h = canvas.getHeight();
+        return (wy - worldBounds.getYMin()) / (worldBounds.getYMax() - worldBounds.getYMin()) * h;
+    }
+
+    private double screenToWorldX(double sx) {
+        if (worldBounds == null) return sx;
+        double w = canvas.getWidth();
+        return sx / w * (worldBounds.getXMax() - worldBounds.getXMin()) + worldBounds.getXMin();
+    }
+
+    private double screenToWorldY(double sy) {
+        if (worldBounds == null) return sy;
+        double h = canvas.getHeight();
+        return sy / h * (worldBounds.getYMax() - worldBounds.getYMin()) + worldBounds.getYMin();
+    }
+
+    // ---- rendering ----
+
     private void repaint() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        // 1. Segments de base
         if (currentSegments != null) {
             gc.setStroke(Color.web("#6c7086"));
             gc.setLineWidth(1.0);
             for (Segment s : currentSegments) {
-                gc.strokeLine(s.getP1().getX(), s.getP1().getY(), s.getP2().getX(), s.getP2().getY());
+                gc.strokeLine(
+                        worldToScreenX(s.getP1().getX()), worldToScreenY(s.getP1().getY()),
+                        worldToScreenX(s.getP2().getX()), worldToScreenY(s.getP2().getY()));
             }
         }
 
-        // 2. Fenêtre de requête (fixe ou en cours de drag)
-        if (isDragging) {
-            drawPreviewWindow(gc, dragX1, dragY1, dragX2, dragY2);
-        } else if (currentWindow != null) {
-            drawPreviewWindow(gc, currentWindow.getXMin(), currentWindow.getYMin(), 
-                             currentWindow.getXMax(), currentWindow.getYMax());
-        }
-
-        // 3. Segments trouvés
         if (currentHighlighted != null) {
             gc.setStroke(Color.web("#a6e3a1"));
             gc.setLineWidth(2.5);
             for (Segment s : currentHighlighted) {
-                gc.strokeLine(s.getP1().getX(), s.getP1().getY(), s.getP2().getX(), s.getP2().getY());
+                gc.strokeLine(
+                        worldToScreenX(s.getP1().getX()), worldToScreenY(s.getP1().getY()),
+                        worldToScreenX(s.getP2().getX()), worldToScreenY(s.getP2().getY()));
             }
+        }
+
+        // Draw window on top so it is always visible
+        if (isDragging) {
+            drawPreviewWindowScreen(gc, dragX1, dragY1, dragX2, dragY2);
+        } else if (currentWindow != null) {
+            drawPreviewWindowScreen(gc,
+                    worldToScreenX(currentWindow.getXMin()), worldToScreenY(currentWindow.getYMin()),
+                    worldToScreenX(currentWindow.getXMax()), worldToScreenY(currentWindow.getYMax()));
         }
     }
 
-    private void drawPreviewWindow(GraphicsContext gc, double x1, double y1, double x2, double y2) {
+    private void drawPreviewWindowScreen(GraphicsContext gc, double x1, double y1, double x2, double y2) {
         double x = Math.min(x1, x2);
         double y = Math.min(y1, y2);
         double w = Math.abs(x1 - x2);
