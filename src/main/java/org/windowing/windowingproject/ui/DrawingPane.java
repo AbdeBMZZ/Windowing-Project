@@ -10,6 +10,21 @@ import org.windowing.windowingproject.model.Window;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * JavaFX canvas pane that renders axis-parallel segments and a query window.
+ *
+ * <p>Coordinate transform: segment data lives in world coordinates; the canvas
+ * renders in screen (pixel) coordinates.  Call {@link #setWorldBounds(Window)}
+ * once after loading a file to establish the mapping.  If no world bounds are set,
+ * world coordinates are used directly (identity transform).</p>
+ *
+ * <p>Mouse drag interaction: press-drag-release draws a selection rectangle whose
+ * corners are converted to world coordinates before firing the
+ * {@link #setOnWindowSelected(java.util.function.Consumer)} callback.</p>
+ *
+ * <p>Render order (back to front): all segments (gray) → highlighted segments (green)
+ * → query window rectangle (blue, dashed) — the window is always on top.</p>
+ */
 public class DrawingPane extends Pane {
     private final Canvas canvas;
     private double dragX1, dragY1, dragX2, dragY2;
@@ -55,11 +70,23 @@ public class DrawingPane extends Pane {
         canvas.heightProperty().addListener(evt -> repaint());
     }
 
+    /**
+     * Sets the world-space bounding box used for coordinate transforms.
+     * Must be called after loading a new file.
+     *
+     * @param bounds world bounding window from the data file
+     */
     public void setWorldBounds(Window bounds) {
         this.worldBounds = bounds;
         repaint();
     }
 
+    /**
+     * Registers a callback invoked when the user finishes a drag selection.
+     * The callback receives a {@link Window} in <em>world</em> coordinates.
+     *
+     * @param callback consumer receiving the selected window
+     */
     public void setOnWindowSelected(Consumer<Window> callback) {
         this.onWindowSelected = callback;
     }

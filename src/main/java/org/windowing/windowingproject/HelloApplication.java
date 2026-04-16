@@ -13,6 +13,13 @@ import org.windowing.windowingproject.ui.WindowingController;
 
 import java.io.File;
 
+/**
+ * JavaFX entry point for the Windowing application.
+ *
+ * <p>Builds the sidebar (file loader, coordinate fields, query button, statistics)
+ * and a central {@link DrawingPane}. All algorithmic logic is delegated to
+ * {@link org.windowing.windowingproject.ui.WindowingController}.</p>
+ */
 public class HelloApplication extends Application {
 
     private final WindowingController controller = new WindowingController();
@@ -92,6 +99,11 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
+    /**
+     * Reads the coordinate fields, builds a {@link Window}, selects the right
+     * strategy via {@link WindowingController}, and updates the canvas.
+     * Empty fields or "-inf"/"+inf" text are treated as ±∞.
+     */
     private void runWindowing() {
         if (!controller.isLoaded()) {
             Alert alert = new Alert(Alert.AlertType.WARNING,
@@ -125,7 +137,16 @@ public class HelloApplication extends Application {
         }
     }
 
-    /** Parses a coordinate field; empty or "inf"-like text returns {@code defaultValue}. */
+    /**
+     * Parses a coordinate field.
+     * Empty, {@code -inf}, {@code −∞} → {@link Double#NEGATIVE_INFINITY}.
+     * {@code +inf}, {@code inf}, {@code +∞}, {@code ∞} → {@link Double#POSITIVE_INFINITY}.
+     * Otherwise parsed as a decimal number.
+     *
+     * @param text         raw text from the input field
+     * @param defaultValue fallback when the text is empty or null
+     * @return the parsed coordinate value
+     */
     private double parseCoord(String text, double defaultValue) {
         if (text == null) return defaultValue;
         String t = text.trim().replace(",", ".");
@@ -140,6 +161,12 @@ public class HelloApplication extends Application {
         return Double.parseDouble(t);
     }
 
+    /**
+     * Opens a file chooser, loads segments via {@link WindowingController#load},
+     * sets the world bounds on the drawing pane, and refreshes the canvas.
+     *
+     * @param stage owner stage for the file-chooser dialog
+     */
     private void loadFile(Stage stage) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open Segments File");

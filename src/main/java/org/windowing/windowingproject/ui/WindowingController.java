@@ -1,8 +1,19 @@
 package org.windowing.windowingproject.ui;
 
-import org.windowing.windowingproject.model.*;
-import org.windowing.windowingproject.pst.*;
-import org.windowing.windowingproject.strategy.*;
+import org.windowing.windowingproject.model.PstEntry;
+import org.windowing.windowingproject.model.Segment;
+import org.windowing.windowingproject.model.Window;
+import org.windowing.windowingproject.pst.IntervalTree;
+import org.windowing.windowingproject.pst.PrioritySearchTree;
+import org.windowing.windowingproject.pst.PstIndex;
+import org.windowing.windowingproject.pst.PstWindowing;
+import org.windowing.windowingproject.strategy.BoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.BottomBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.LeftBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.RightBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.TopBoundedWindowStrategy;
+import org.windowing.windowingproject.strategy.WindowingContext;
+import org.windowing.windowingproject.strategy.WindowingStrategy;
 import org.windowing.windowingproject.util.FileLoader;
 
 import java.util.ArrayList;

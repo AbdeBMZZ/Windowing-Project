@@ -1,10 +1,9 @@
 package org.windowing.windowingproject.model;
 
 /**
- * Line segment between two points in the plane. Windowing uses axis-aligned
- * bounding box
- * intersection with the query window (valid for horizontal/vertical segments
- * from the assignment).
+ * Axis-parallel line segment between two points in the plane.
+ * Supports only horizontal (y1 == y2) and vertical (x1 == x2) segments,
+ * as required by the windowing assignment.
  */
 public class Segment {
 
@@ -16,56 +15,46 @@ public class Segment {
         this.p2 = p2;
     }
 
-    public Point2D getP1() {
-        return p1;
-    }
-
-    public Point2D getP2() {
-        return p2;
-    }
+    public Point2D getP1() { return p1; }
+    public Point2D getP2() { return p2; }
 
     /**
-     * Closed intersection with an axis-aligned query window (supports {@code ±∞}
-     * bounds).
+     * Returns {@code true} iff this segment intersects the closed query window {@code w}.
+     * Handles ±∞ window bounds correctly.
+     *
+     * <p>For a horizontal segment (y1 == y2): it intersects when its y value is within
+     * {@code [wBottom, wTop]} and its x-interval overlaps {@code [wLeft, wRight]}.</p>
+     *
+     * <p>For a vertical segment (x1 == x2): it intersects when its x value is within
+     * {@code [wLeft, wRight]} and its y-interval overlaps {@code [wBottom, wTop]}.</p>
      *
      * @param w query window
-     * @return true iff the segment's bounding box intersects {@code w}'s box
+     * @return {@code true} iff the segment intersects {@code w}
      */
-    public boolean intersects(Window window) {
-        // Limites de la fenêtre
-        double wLeft = window.getXMin();
-        double wRight = window.getXMax();
-        double wBottom = window.getYMin();
-        double wTop = window.getYMax();
+    public boolean intersects(Window w) {
+        double wLeft   = w.getXMin();
+        double wRight  = w.getXMax();
+        double wBottom = w.getYMin();
+        double wTop    = w.getYMax();
 
-        // Récupération des coordonnées du segment
-        // (Suppose que vous avez des méthodes getX() et getY() sur vos Point2D)
-        double minX = Math.min(this.getP1().getX(), this.getP2().getX());
-        double maxX = Math.max(this.getP1().getX(), this.getP2().getX());
-        double minY = Math.min(this.getP1().getY(), this.getP2().getY());
-        double maxY = Math.max(this.getP1().getY(), this.getP2().getY());
+        double minX = Math.min(p1.getX(), p2.getX());
+        double maxX = Math.max(p1.getX(), p2.getX());
+        double minY = Math.min(p1.getY(), p2.getY());
+        double maxY = Math.max(p1.getY(), p2.getY());
 
-        // 1. Cas d'un segment HORIZONTAL (y1 == y2)
         if (minY == maxY) {
-            // Le segment est à une hauteur (Y) contenue dans la fenêtre
-            boolean isYInside = minY >= wBottom && minY <= wTop;
-            // Le segment chevauche la largeur (X) de la fenêtre
-            boolean isXOverlapping = minX <= wRight && maxX >= wLeft;
-
-            return isYInside && isXOverlapping;
-        }
-        // 2. Cas d'un segment VERTICAL (x1 == x2)
-        else if (minX == maxX) {
-            // Le segment est à une position (X) contenue dans la fenêtre
-            boolean isXInside = minX >= wLeft && minX <= wRight;
-            // Le segment chevauche la hauteur (Y) de la fenêtre
-            boolean isYOverlapping = minY <= wTop && maxY >= wBottom;
-
-            return isXInside && isYOverlapping;
+            // Horizontal segment: y must be in window, x-range must overlap window
+            return minY >= wBottom && minY <= wTop
+                    && minX <= wRight && maxX >= wLeft;
         }
 
-        // Sécurité au cas où il y aurait des points simples ou des segments non
-        // orthogonaux
+        if (minX == maxX) {
+            // Vertical segment: x must be in window, y-range must overlap window
+            return minX >= wLeft && minX <= wRight
+                    && minY <= wTop && maxY >= wBottom;
+        }
+
+        // Non-axis-parallel segments are not supported
         return false;
     }
 }

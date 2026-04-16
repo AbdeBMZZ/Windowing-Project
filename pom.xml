@@ -90,6 +90,30 @@
                 <configuration>
                     <release>17</release>
                 </configuration>
+                <!-- Allow test sources to read JUnit from unnamed module -->
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <goals><goal>testCompile</goal></goals>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>--add-reads=org.windowing.windowingproject=ALL-UNNAMED</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <argLine>
+                        --add-reads=org.windowing.windowingproject=ALL-UNNAMED
+                        --add-opens=org.windowing.windowingproject/org.windowing.windowingproject.model=ALL-UNNAMED
+                        --add-opens=org.windowing.windowingproject/org.windowing.windowingproject.pst=ALL-UNNAMED
+                    </argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.openjfx</groupId>
@@ -97,11 +121,9 @@
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>org.windowing.windowingproject/org.windowing.windowingproject.TestWindowing
-                            </mainClass>
+                            <mainClass>org.windowing.windowingproject/org.windowing.windowingproject.TestWindowing</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
